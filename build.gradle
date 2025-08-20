@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'com.darkona'
-version = '0.0.1-SNAPSHOT'
+version = '0.0.1'
 
 java {
     toolchain {
@@ -24,18 +24,33 @@ repositories {
     mavenCentral()
 }
 
-dependencies {
-    implementation ('com.darkona.logged:logged:1.0.0') {
-        changing = true
+tasks.register("copyAgents", Copy) {
+    from configurations.runtimeClasspath.filter {
+        it.name.startsWith("aspectjweaver")
     }
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.boot:spring-boot-starter-actuator'
-    compileOnly 'org.projectlombok:lombok'
-    annotationProcessor 'org.projectlombok:lombok'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    into project.layout.buildDirectory.dir("libs")
+    rename { "aspectjweaver.jar" }
 }
 
-tasks.named('test') {
-    useJUnitPlatform()
+build {
+    finalizedBy("copyAgents")
+}
+dependencies {
+    implementation "io.github.darkona:logged:1.1.0"
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    //runtimeOnly "org.aspectj:aspectjrt:1.9.24"
+    runtimeOnly "org.aspectj:aspectjweaver:1.9.24"
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+bootRun {
+    def aj = configurations.runtimeClasspath
+            .filter { it.name.startsWith("aspectjweaver") }
+            .singleFile
+    println aj
+    jvmArgs "-javaagent:${aj.absolutePath}"
 }
