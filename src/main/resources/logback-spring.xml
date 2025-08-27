@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <!-- URL de Alloy (override con -DLOKI_URL=... o env LOKI_URL) -->
+    <property name="LOKI_URL" value="${LOKI_HOST:-http://alloy:9999/}loki/api/v1/push"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+        <labels>
+            app = scott
+            env = local
+            service = scott
+            host=${HOST:Dragon}
+        </labels>
+
+        <message>
+            <pattern>%-5level [%thread] %logger{20} - %msg%n</pattern>
+        </message>
+
+        <http>
+            <url>${LOKI_URL}</url>
+            <useProtobufApi>true</useProtobufApi>
+            <!-- sender class="com.github.loki4j.logback.ApacheHttpSender" /-->
+            <requestTimeoutMs>10000</requestTimeoutMs>
+            <maxRetries>3</maxRetries>
+        </http>
+
+        <batch>
+            <maxItems>100</maxItems>
+            <timeoutMs>5000</timeoutMs>
+        </batch>
+
+        <verbose>false</verbose>
+    </appender>
+
+    <appender name="ASYNC_LOKI" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="LOKI"/>
+        <queueSize>8192</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <neverBlock>true</neverBlock>
+    </appender>
+
+    <appender name="ASYNC_CONSOLE" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="CONSOLE"/>
+        <queueSize>8192</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <neverBlock>true</neverBlock>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="ASYNC_CONSOLE"/>
+        <appender-ref ref="ASYNC_LOKI"/>
+    </root>
+</configuration>

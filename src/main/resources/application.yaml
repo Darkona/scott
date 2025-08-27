@@ -1,14 +1,49 @@
 spring:
   application:
     name: scott
+  config:
+    import: optional:file:../local-config/.env[.properties]
+  profiles.active: ${APP_PROFILE:default}
   main:
     allow-bean-definition-overriding: true
-
+  output:
+    ansi:
+      enabled: ALWAYS
 logged:
   icons: true
-  color: true
   use-utf8: false
 
-logging:
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %5level : %msg%n"
+  mdc:
+    enabled: true
+    args-template: "({c}){k}:{v}"
+  slf4j:
+    args-template: "({c}){k}:{v}"
+    depth-icon-color: Yellow
+
+
+
+# Actuator configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env,configprops,beans,mappings,prometheus
+      base-path: /actuator
+  endpoint:
+    prometheus:
+      access: unrestricted
+    health:
+      show-details: always
+      show-components: always
+    info:
+      access: unrestricted
+    metrics:
+      access: unrestricted
+    env:
+      access: unrestricted
+    configprops:
+      access: unrestricted
+    beans:
+      access: unrestricted
+    mappings:
+      access: unrestricted

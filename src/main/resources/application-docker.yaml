@@ -1,0 +1,67 @@
+spring:
+  application:
+    name: scott-docker
+# Actuator configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env,configprops,beans,mappings,prometheus
+      base-path: /actuator
+  endpoint:
+    prometheus:
+      access: unrestricted
+    health:
+      show-details: always
+      show-components: always
+    info:
+      access: unrestricted
+    metrics:
+      access: unrestricted
+    env:
+      access: unrestricted
+    configprops:
+      access: unrestricted
+    beans:
+      access: unrestricted
+    mappings:
+      access: unrestricted
+
+# Logging configuration
+logging:
+  level:
+    root: INFO
+    com.dummy: INFO
+    org.springframework: INFO
+    org.hibernate: INFO
+    org.springframework.data.redis: WARN
+    org.springframework.data.mongodb: WARN
+    org.springframework.jdbc: WARN
+    org.springframework.ai: WARN
+    org.springframework.security: WARN
+
+# Swagger/OpenAPI configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+  packages-to-scan: com.dummy.sdk.skeleton.api
+
+otel:
+  service:
+    name: scott
+  exporter:
+    otlp:
+      endpoint: "http://alloy:4318"
+      metrics:
+        protocol: http/protobuf
+      traces:
+        protocol: grpc
+        endpoint: "http://alloy:4317"
+  metrics:
+    exporter: otlp
+  logs:
+    exporter: none

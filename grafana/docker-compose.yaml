@@ -1,0 +1,99 @@
+services:
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    command: -config.file=/etc/loki/loki-config.yaml
+    ports: ["3100:3100"]
+    volumes:
+      - ./loki-config.yaml:/etc/loki/loki-config.yaml:ro
+      - loki-data:/loki
+    networks: [obsv]
+
+  tempo:
+    image: grafana/tempo:latest
+    container_name: tempo
+    command: ["-config.file=/etc/tempo/tempo.yaml"]
+    ports:
+      - "3200:3200"   # Tempo API (Grafana)
+    volumes:
+      - ./tempo.yaml:/etc/tempo/tempo.yaml:ro
+      - tempo-data:/var/tempo
+    networks: [obsv]
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yaml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=15d"
+      - "--web.enable-otlp-receiver"
+    ports: ["9090:9090"]
+    volumes:
+      - ./prometheus.yaml:/etc/prometheus/prometheus.yaml:ro
+      - prometheus-data:/prometheus
+    networks: [obsv]
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports: ["3000:3000"]
+    depends_on: [loki, tempo, prometheus]
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks: [obsv]
+
+  # Alloy collects Docker logs -> Loki. It does NOT publish 4317/4318.
+  alloy:
+    image: grafana/alloy:latest
+    container_name: alloy
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy
+      - /etc/alloy/config.alloy
+    ports:
+      - "12345:12345"           # UI/metrics de Alloy
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP (optional)
+      - "9999:9999"   # Loki Push para logs
+    volumes:
+      - ./config.alloy:/etc/alloy/config.alloy:ro
+      - alloy-data:/var/lib/alloy
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - TZ=America/Santiago
+    depends_on: [ loki, tempo ]   # Alloy necesita verlos para pushear
+    networks: [ obsv ]
+
+  scott:
+    build:
+      context: ../
+    container_name: scott
+    ports: ["8080:8080"]
+    environment:
+       - OTEL_TRACES_EXPORTER=otlp
+       - OTEL_EXPORTER_OTLP_TRACES_PROTOCOL=grpc
+       - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://alloy:4317
+       - OTEL_METRICS_EXPORTER=none
+       - OTEL_LOGS_EXPORTER=none
+       - SPRING_PROFILES_ACTIVE=docker
+       - OTEL_LOGS_EXPORTER=otlp
+       - OTEL_EXPORTER_OTLP_LOGS_PROTOCOL=grpc
+       - OTEL_EXPORTER_OTLP_LOGS_ENDPOINT=http://alloy:4317
+       - OTEL_INSTRUMENTATION_LOGBACK_APPENDER_EXPERIMENTAL_CAPTURE=true
+    volumes:
+      - ../build/libs:/app
+    depends_on: [tempo]
+    networks: [obsv]
+
+volumes:
+  loki-data:
+  tempo-data:
+  prometheus-data:
+  grafana-data:
+  alloy-data:
+
+networks:
+  obsv:
+    driver: bridge

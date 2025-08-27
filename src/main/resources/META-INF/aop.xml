@@ -9,7 +9,7 @@
 
     <aspects>
         <!-- weave in just this aspect -->
-        <aspect name="io.github.darkona.logged.LoggedAspectJ"/>
+        <aspect name="io.github.darkona.logged.weaving.WeavedAspect"/>
     </aspects>
 
 </aspectj>

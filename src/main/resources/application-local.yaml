@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: Scott-local
+
+logged:
+  color: true
+  slf4j:
+    call-msg-args: "{h:}{eI:} {c}::{m} called with args: [{a}] spanId={mdc.spanId:}"
+    capture-from-mdc: class, method, spanId
+  mdc:
+    enabled: true
+  otel:
+    enabled: true
+
+logging:
+  pattern:
+    console: "%cyan(%d{yyyy-MM-dd HH:mm:ss.SSS}) %highlight(%-5level) %30.30(-- %logger{30}) - %msg%n"
+
+otel:
+  service:
+    name: scott
+  exporter:
+    otlp:
+      endpoint: "http://localhost:4318"
+      metrics:
+        protocol: http/protobuf
+      traces:
+        protocol: grpc
+        endpoint: "http://localhost:4317"
+  metrics:
+    exporter: otlp
+  logs:
+    exporter: none
