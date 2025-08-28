@@ -1,10 +1,12 @@
 package com.darkona.scott;
 
 import io.github.darkona.logged.Logged;
+import io.github.darkona.logged.utils.Colorizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.Map;
 
 @Service
@@ -60,9 +62,11 @@ public class DemoService {
 
     //This log should only be sent to the LOKI appender (see logback-spring.xml and application-local.yaml)
     // So we add the marker "LOKI"
-    @Logged(marker = "LOKI")
+    @Logged(markers = "LOKI", args = false)
     public void IAmInvisible(Map<String, String> attr) {
         log.info("There wasn't any automatic log from DemoService::IAmInvisible before this one in the console by logged. But you should be able to see it in Grafana");
-        log.info(attr.toString());
+        attr.entrySet().stream()
+            .sorted(Map.Entry.comparingByKey(Comparator.comparingInt(Integer::parseInt)))
+            .forEach(e -> log.info("{} = {}", e.getKey(), Colorizer.customBg(0, 0, 0, e.getValue())));
     }
 }
