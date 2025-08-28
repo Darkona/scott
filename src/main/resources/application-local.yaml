@@ -2,15 +2,72 @@ spring:
   application:
     name: Scott-local
 
+#Logged configuration
 logged:
   color: true
-  slf4j:
-    call-msg-args: "{h:}{eI:} {c}::{m} called with args: [{a}] spanId={mdc.spanId:}"
-    capture-from-mdc: class, method, spanId
-  mdc:
-    enabled: true
+
+
   otel:
+
+    #Enable getting oTel span data by Logged, and also inserting contextual data captured by Logged
+    #to the span
     enabled: true
+
+    #Adds otel span id or name to the mdc
+    add-to-mdc: true
+
+    #Name of the otel property to insert into the mdc
+    mdc-key: span_name
+
+    #Add the class name to the span attributes
+    add-class: true
+
+    #Add the method name to the span attributes
+    add-method: true
+
+    #Add the depth of the call stack to the span attributes
+    add-depth: true
+
+
+  mdc:
+
+    #Enable using the MDC by logged
+    enabled: true
+
+  slf4j:
+
+    #Get the values with these keys from the mdc so they can be added to logs
+    capture-from-mdc: class, method, span_name, fci, trace_id
+
+    #Add span_name from the mdc to the logs
+    call-msg-args: "{h:}{eI:} {c}::{m} called with args: [{a}] span_name={mdc.span_name:}"
+
+  logback:
+    #Enable logback plugin for filtering logs to different appenders
+    enabled: true
+
+    #create logback filters for logs created by logged
+    appender-filters:
+
+
+      # See logback-spring.xml
+      # Don't send logs with the marker "LOKI" to the Console Appender
+      # Commenting this block should allow the following lines to appear in the console:
+      # INFO   com.darkona.scott.DemoService - >↓○ DemoService::salute called with args: [] span_name=Logged: DemoService$salute()
+      # INFO   com.darkona.scott.DemoService - >↑○ DemoService::salute returned with value: O-> salute1-> salute2-> salute 3-> Salute 4: Hello Time taken: 3 ms
+      - appender-name: CONSOLE
+        name: LOKI
+        on-match: deny
+        on-mismatch: neutral
+
+      # Send debug logs with the marker LOKI to the loki appender
+      - appender-name: LOKI
+        appender-async-name: ASYNC_LOKI
+        key: level
+        value: DEBUG
+        async: true
+        on-match: accept
+        on-mismatch: neutral
 
 logging:
   pattern:

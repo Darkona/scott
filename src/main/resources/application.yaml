@@ -2,13 +2,24 @@ spring:
   application:
     name: scott
   config:
+    #.env file outside of the project directory
+    # contains ENVIRONMENT=local
+
     import: optional:file:../local-config/.env[.properties]
-  profiles.active: ${APP_PROFILE:default}
+
+    #sets the Spring profile from the value in the .env file, which only exists on local machine.
+    #when in docker there's an env variable with SPRING_PROFILES_ACTIVE=docker, see grafana/docker-compose.yaml
+
+  profiles:
+    active: "${ENVIRONMENT:default}"
+
   main:
     allow-bean-definition-overriding: true
   output:
     ansi:
       enabled: ALWAYS
+
+
 logged:
   icons: true
   use-utf8: false
@@ -18,9 +29,7 @@ logged:
     args-template: "({c}){k}:{v}"
   slf4j:
     args-template: "({c}){k}:{v}"
-    depth-icon-color: Yellow
-
-
+    depth-icon-color: YELLOW
 
 # Actuator configuration
 management:

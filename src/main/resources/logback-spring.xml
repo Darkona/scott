@@ -1,60 +1,124 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
+
+    <!-- Bring the default spring configuration for the console appender -->
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
 
     <!-- URL de Alloy (override con -DLOKI_URL=... o env LOKI_URL) -->
     <property name="LOKI_URL" value="${LOKI_HOST:-http://alloy:9999/}loki/api/v1/push"/>
 
-    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
-        </encoder>
-    </appender>
+    <!-- Enable the console and the loki appender only when running locally or in docker, enabled by spring profile -->
+    <springProfile name="local, docker">
 
-    <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
-        <labels>
-            app = scott
-            env = local
-            service = scott
-            host=${HOST:Dragon}
-        </labels>
+        <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder>
+                <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+            </encoder>
+        </appender>
 
-        <message>
-            <pattern>%-5level [%thread] %logger{20} - %msg%n</pattern>
-        </message>
+        <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+            <labels>
+                app = scott
+                env = local
+                service = scott
+                host=${HOST:Dragon}
+            </labels>
 
-        <http>
-            <url>${LOKI_URL}</url>
-            <useProtobufApi>true</useProtobufApi>
-            <!-- sender class="com.github.loki4j.logback.ApacheHttpSender" /-->
-            <requestTimeoutMs>10000</requestTimeoutMs>
-            <maxRetries>3</maxRetries>
-        </http>
+            <message>
+                <pattern>%-5level [%thread] %logger{20} - %msg%n</pattern>
+            </message>
 
-        <batch>
-            <maxItems>100</maxItems>
-            <timeoutMs>5000</timeoutMs>
-        </batch>
+            <http>
+                <url>${LOKI_URL}</url>
+                <useProtobufApi>true</useProtobufApi>
+                <!-- sender class="com.github.loki4j.logback.ApacheHttpSender" /-->
+                <requestTimeoutMs>10000</requestTimeoutMs>
+                <maxRetries>3</maxRetries>
+            </http>
 
-        <verbose>false</verbose>
-    </appender>
+            <batch>
+                <maxItems>100</maxItems>
+                <timeoutMs>5000</timeoutMs>
+            </batch>
 
-    <appender name="ASYNC_LOKI" class="ch.qos.logback.classic.AsyncAppender">
-        <appender-ref ref="LOKI"/>
-        <queueSize>8192</queueSize>
-        <discardingThreshold>0</discardingThreshold>
-        <neverBlock>true</neverBlock>
-    </appender>
+            <verbose>false</verbose>
+        </appender>
 
-    <appender name="ASYNC_CONSOLE" class="ch.qos.logback.classic.AsyncAppender">
-        <appender-ref ref="CONSOLE"/>
-        <queueSize>8192</queueSize>
-        <discardingThreshold>0</discardingThreshold>
-        <neverBlock>true</neverBlock>
-    </appender>
+        <!-- Enable async appenders to make logging not choke the current thread -->
+        <appender name="ASYNC_CONSOLE" class="ch.qos.logback.classic.AsyncAppender">
+            <appender-ref ref="CONSOLE"/>
+            <queueSize>8192</queueSize>
+            <discardingThreshold>0</discardingThreshold>
+            <neverBlock>true</neverBlock>
+        </appender>
 
-    <root level="INFO">
-        <appender-ref ref="ASYNC_CONSOLE"/>
-        <appender-ref ref="ASYNC_LOKI"/>
-    </root>
+        <appender name="ASYNC_LOKI" class="ch.qos.logback.classic.AsyncAppender">
+            <appender-ref ref="LOKI"/>
+            <queueSize>8192</queueSize>
+            <discardingThreshold>0</discardingThreshold>
+            <neverBlock>true</neverBlock>
+        </appender>
+
+        <root level="INFO">
+            <appender-ref ref="ASYNC_CONSOLE"/>
+            <appender-ref ref="ASYNC_LOKI"/>
+        </root>
+    </springProfile>
+
+
+    <!-- Use console appender with json encoder when in other environments or with default profile -->
+    <springProfile name="!local &amp; !docker">
+
+        <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
+
+            <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+                <providers>
+                    <!-- Timestamp in ISO format -->
+                    <timestamp>
+                        <fieldName>timestamp</fieldName>
+                        <pattern>yyyy-MM-dd'T'HH:mm:ss.SSSXXX</pattern>
+                    </timestamp>
+
+                    <!-- Log level -->
+                    <logLevel>
+                        <fieldName>level</fieldName>
+                    </logLevel>
+
+                    <!-- Logger name -->
+                    <loggerName>
+                        <fieldName>logger</fieldName>
+                    </loggerName>
+
+                    <!-- Thread name -->
+                    <threadName>
+                        <fieldName>thread</fieldName>
+                    </threadName>
+
+                    <!-- Log message -->
+                    <message>
+                        <fieldName>message</fieldName>
+                    </message>
+
+                    <!-- MDC (Mapped Diagnostic Context) -->
+                    <mdc>
+                        <fieldName>mdc</fieldName>
+                    </mdc>
+                </providers>
+            </encoder>
+        </appender>
+
+
+        <appender name="ASYNC_JSON" class="ch.qos.logback.classic.AsyncAppender">
+            <appender-ref ref="JSON"/>
+            <queueSize>8192</queueSize>
+            <discardingThreshold>0</discardingThreshold>
+            <neverBlock>true</neverBlock>
+        </appender>
+
+        <root level="INFO">
+            <appender-ref ref="ASYNC_JSON"/>
+        </root>
+    </springProfile>
+
+
 </configuration>

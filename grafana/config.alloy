@@ -15,7 +15,7 @@ otelcol.receiver.otlp "ingest" {
   http { endpoint = "0.0.0.0:4318" }
   output {
     traces  = [otelcol.processor.batch.default.input]
-    logs    = [otelcol.processor.batch.default.input]
+    logs    = [otelcol.processor.batch.logs_fast.input]
     metrics = [otelcol.processor.batch.default.input]
   }
 }
