@@ -16,7 +16,7 @@ RUN addgroup -g 1001 -S appgroup && \
 # Copy the JAR file
 COPY build/agents/aspectjweaver.jar aspectjweaver.jar
 COPY build/agents/opentelemetry.jar opentelemetry.jar
-COPY build/libs/scott-0.0.1.jar app.jar
+COPY build/libs/app.jar app.jar
 
 # Change ownership to non-root user
 RUN chown -R appuser:appgroup /app
