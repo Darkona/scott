@@ -4,8 +4,8 @@
     <!-- Bring the default spring configuration for the console appender -->
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
 
-    <!-- URL de Alloy LOKI_HOST en environment variable conhttp://alloy:9999 o http://localhost:// -->
-    <property name="LOKI_URL" value="${LOKI_HOST}/loki/api/v1/push"/>
+    <!-- URL de Alloy (override con -DLOKI_URL=... o env LOKI_URL) -->
+    <property name="LOKI_URL" value="${LOKI_HOST:-http://alloy:9999}/loki/api/v1/push"/>
 
     <!-- Enable the console and the loki appender only when running locally or in docker, enabled by spring profile -->
     <springProfile name="local, docker">
