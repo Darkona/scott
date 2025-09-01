@@ -12,7 +12,6 @@ spring:
 
   profiles:
     active: "${ENVIRONMENT:default}"
-
   main:
     allow-bean-definition-overriding: true
   output:

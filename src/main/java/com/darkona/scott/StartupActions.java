@@ -9,6 +9,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Map;
 
 import static io.github.darkona.logged.utils.Colorizer.colorizeHex;
@@ -22,7 +23,7 @@ public class StartupActions {
     private static final Logger log = LoggerFactory.getLogger(StartupActions.class);
     private final LogDecorator deco;
 
-    private final Map<String, String> kanto151 = Map.<String, String>ofEntries(
+    private final List<Map.Entry<String, String>> kanto151 = List.of(
             Map.entry("1", colorizeHex("#78C850", "Bulbasaur")),
             Map.entry("2", colorizeHex("#78C850", "Ivysaur")),
             Map.entry("3", colorizeHex("#78C850", "Venusaur")),

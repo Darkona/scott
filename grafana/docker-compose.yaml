@@ -82,12 +82,14 @@ services:
        - OTEL_EXPORTER_OTLP_LOGS_PROTOCOL=grpc
        - OTEL_EXPORTER_OTLP_LOGS_ENDPOINT=http://alloy:4317
        - OTEL_INSTRUMENTATION_LOGBACK_APPENDER_EXPERIMENTAL_CAPTURE=true
+       - LOKI_HOST=http://alloy:9999
+       - ENVIRONMENT=docker
 
     # Uses the build output directory as a volume so the image doesn't have to be rebuilt
     # but instead uses the jars from outside the container, in this case, app.jar
     # Useful when developing but needs to be removed when moving to environments.
-    volumes:
-      - ../build/libs:/app
+    #volumes:
+    #  - ../build/libs:/app
     depends_on: [tempo]
     networks: [obsv]
 
